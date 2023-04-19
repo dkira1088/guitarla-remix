@@ -10,6 +10,7 @@ import {
 import Header from "~/components/Header";
 import styles from "~/styles/index.css";
 import Footer from "./components/Footer";
+import { useEffect, useState } from "react";
 
 export function meta() {
   return {
@@ -46,9 +47,55 @@ export function links() {
 }
 
 export default function App() {
+  const carritoLS = typeof window !== 'undefined'? JSON.parse(localStorage.getItem('carrito')) ?? [] : null;
+  const [carrito, setCarrito] = useState(carritoLS);
+  
+  useEffect(()=>{
+    localStorage.setItem('carrito', JSON.stringify(carrito));
+  },[carrito]);
+
+  const agregarCarrito = (guitarra) => {
+    if (carrito.some((guitarraState) => guitarraState.id === guitarra.id)) {
+      const carritoActualizado = carrito.map((guitarraState) => {
+        if (guitarraState.id === guitarra.id) {
+          guitarraState.cantidad = guitarra.cantidad;
+        }
+
+        return guitarraState;
+      });
+
+      setCarrito(carritoActualizado);
+    } else {
+      setCarrito([...carrito, guitarra]);
+    }
+  };
+
+  const actualizarCantidad = (guitarra) => {
+    const carritoActualizado = carrito.map((guitarraState) => {
+      if (guitarraState.id === guitarra.id) {
+        guitarraState.cantidad = guitarra.cantidad;
+      }
+      return guitarraState;
+    });
+
+    setCarrito(carritoActualizado);
+  };
+
+  const eliminarGuitarra = id =>{
+    const carritoActualizado =  carrito.filter(producto => producto.id!== id);
+    setCarrito(carritoActualizado);
+  }
+
   return (
     <Layout>
-      <Outlet />
+      <Outlet
+        context={{
+          agregarCarrito,
+          carrito,
+          actualizarCantidad,
+          eliminarGuitarra
+        }}
+      />
     </Layout>
   );
 }
@@ -77,15 +124,25 @@ export function CatchBoundary() {
   const error = useCatch();
   return (
     <Layout>
-      <p className="error">{error.status} {error.statusText}</p>
-      <Link className="error-enlace" to="/">Retornar a la pagina principal</Link>
+      <p className="error">
+        {error.status} {error.statusText}
+      </p>
+      <Link className="error-enlace" to="/">
+        Retornar a la pagina principal
+      </Link>
     </Layout>
   );
 }
 
-export function ErrorBoundary({error}){
-  return <Layout>
-    <p className="error">{error.status} {error.statusText}</p>
-    <Link className="error-enlace" to="/">Retornar a la pagina principal</Link>
-  </Layout>
+export function ErrorBoundary({ error }) {
+  return (
+    <Layout>
+      <p className="error">
+        {error.status} {error.statusText}
+      </p>
+      <Link className="error-enlace" to="/">
+        Retornar a la pagina principal
+      </Link>
+    </Layout>
+  );
 }
